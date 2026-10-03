@@ -1,4 +1,4 @@
---[[pod_format="raw",created="2026-09-30 00:00:12",modified="2026-10-03 00:12:46",revision=107,xstickers={}]]
+--[[pod_format="raw",created="2026-09-30 00:00:12",modified="2026-10-03 13:16:24",revision=108,xstickers={}]]
 include "./podkit/tokenizer.lua"
 include "./ui/lib.lua"
 include "./podkit/styler.lua"
@@ -51,9 +51,6 @@ function new_parser()
 					attr_value = token.value.value
 				end
 				
-				printh(" which is nil " .. 
-					(cur_elm == nil and "true " or "false ") .. 
-					(cur_elm.attributes == nil and "true " or "false ") )
 				cur_elm.attributes[token.name] = attr_value 
 			elseif token.token == "string" then
 				-- new text element, child of the cur elm

@@ -1,4 +1,4 @@
---[[pod_format="raw",created="2026-10-02 18:49:31",modified="2026-10-03 00:56:02",revision=24]]
+--[[pod_format="raw",created="2026-10-02 18:49:31",modified="2026-10-03 19:49:17",revision=30,xstickers={}]]
 
 include "./ui/lib.lua"
 
@@ -10,7 +10,7 @@ function new_styler()
 				dir="column",
 				padding_inline = {2, 2},
 				width = Fixed(0),
-				height = Fixed(0)
+				height = Fit()
 			},
 			h1 = {
 				padding_block = {6, 6},
@@ -23,6 +23,9 @@ function new_styler()
 			p = {
 				pading_block = {4, 4},
 				color = 0
+			},
+			a = {
+				color = 16
 			}
 		}
 	}
@@ -31,6 +34,9 @@ function new_styler()
 		local style_rules = self.rules[elm.name]
 		if style_rules != nil then
 			styler:apply_rules(elm, style_rules)
+			if elm.name == "a" then
+				printh("a tag color " .. elm.style.color)
+			end
 		end
 	end
 	

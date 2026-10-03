@@ -1,4 +1,4 @@
---[[pod_format="raw",created="2026-09-29 12:29:16",modified="2026-10-02 23:21:54",revision=62,xstickers={}]]
+--[[pod_format="raw",created="2026-09-29 12:29:16",modified="2026-10-03 19:50:10",revision=66,xstickers={}]]
 
 local function bg_draw_command(elm) 
 	return {
@@ -27,7 +27,7 @@ local function text_line_draw_commands(elm)
 			x = line.x,
 			y = line.y,
 			content = line.content,
-			color = elm.style.color
+			color = elm.parent.style.color
 		})
 	end
 	return line_draw_commands
@@ -57,6 +57,7 @@ function draw:make_draw_list(elm, list)
 end
 
 function draw:draw_layout(draw_list, frame)
+	camera(0, frame.scroll)
 	for v in all(draw_list) do
 		local x1 = v.x + frame.x
 		local y1 = v.y + frame.y
@@ -72,4 +73,5 @@ function draw:draw_layout(draw_list, frame)
 			print(v.content, x1, y1, v.color)
 		end
 	end
+	camera()
 end

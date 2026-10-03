@@ -1,4 +1,4 @@
---[[pod_format="raw",created="2026-09-29 12:19:42",modified="2026-10-03 01:20:15",revision=287,xstickers={}]]
+--[[pod_format="raw",created="2026-09-29 12:19:42",modified="2026-10-03 19:38:18",revision=296,xstickers={}]]
 
 function Fixed(v) return { tag = "Fixed", v = v } end
 function Fit() return { tag = "Fit" } end
@@ -215,9 +215,9 @@ local function wrap_text(elm)
 			add(elm.lines, {
 				content = elm.content
 			})
-			elm.block.height = 8
-			elm.block.min_height = 8
-			elm.parent.block.min_height = 8
+			elm.block.height = 10
+			elm.block.min_height = 10
+			elm.parent.block.min_height = 10
 		else
 			local current_line = ""
 			local current_line_size = 0
@@ -244,7 +244,7 @@ local function wrap_text(elm)
 					add(elm.lines, { content = current_line })
 				end
 			end
-			elm.block.min_height = #elm.lines * 8
+			elm.block.min_height = #elm.lines * 10
 			elm.parent.block.min_height = max(elm.parent.block.min_height, elm.block.min_height) 
 		end
 	end
@@ -407,7 +407,7 @@ local function position(elm)
 		foreach(elm.lines, function(line)
 			line.x = elm.parent.block.x 
 				+ elm.parent.style.padding_inline[1]
-			line.y = elm.parent.block.y + (y * 8)
+			line.y = elm.parent.block.y + (y * 10)
 				+ elm.parent.style.padding_block[1]
 			y += 1
 		end)

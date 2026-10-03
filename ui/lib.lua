@@ -1,4 +1,4 @@
---[[pod_format="raw",created="2026-09-29 12:19:42",modified="2026-09-30 01:14:29",revision=252,xstickers={}]]
+--[[pod_format="raw",created="2026-09-29 12:19:42",modified="2026-10-03 01:20:15",revision=287,xstickers={}]]
 
 function Fixed(v) return { tag = "Fixed", v = v } end
 function Fit() return { tag = "Fit" } end
@@ -38,6 +38,7 @@ local function size_text_content(content)
 		end
 	end 
 	word_size_acc = max(word_size_acc - 5, 0)
+	print("size of " .. content .. "   .. max_word" ) 
 	return {max_word, word_size_acc}
 end
 
@@ -63,7 +64,6 @@ local function fit_size_width(elm)
 		local sizes = size_text_content(elm.content)
 		elm.block.width = sizes[2]
 		elm.block.min_width = sizes[1]
-		printh("text" .. sizes[2] .. " " .. sizes[1])
 		return
 	end
 
@@ -87,6 +87,7 @@ local function fit_size_width(elm)
 	
 	if elm.style.sizing.width.tag == "Fixed" then
 		elm.block.width = elm.style.sizing.width.v
+		elm.block.min_width = elm.block.width
 	else
 		local total_gap = #elm.children > 0
 			and (#elm.children - 1) * elm.style.child_gap
@@ -96,7 +97,6 @@ local function fit_size_width(elm)
 				+ elm.style.padding_inline[2], elm.block.min_width)
 			elm.block.width = max(child_acc + total_gap 
 				+ elm.style.padding_inline[2], elm.block.min_width)
-			
 		else
 			elm.block.min_width = max(elm.style.padding_inline[1] + 
 				max_child + elm.style.padding_inline[2], 
@@ -106,8 +106,6 @@ local function fit_size_width(elm)
 			
 		end
 	end
-	
-	printh("sized element with w: " .. elm.block.width .. " h: " .. elm.block.height)	
 end
 
 local function grow_shrink_size_width(elm)
@@ -202,7 +200,7 @@ local function grow_shrink_size_width(elm)
 	end
 end
 
-local space_w = 5
+local space_w = 6
 local function wrap_text(elm)
 	-- we now know the width that our text is allowed to inhabit
 	-- now we need to create lines that fit inside that width
@@ -211,13 +209,15 @@ local function wrap_text(elm)
 			- (elm.parent.style.padding_inline[1]
 			+ elm.parent.style.padding_inline[2])
 		
-		printh("wrap " .. elm.content)
 		elm.lines = {}
 		if wrap_max > elm.block.width then
 			-- no need to wrap, place all the content into a line	
 			add(elm.lines, {
 				content = elm.content
 			})
+			elm.block.height = 8
+			elm.block.min_height = 8
+			elm.parent.block.min_height = 8
 		else
 			local current_line = ""
 			local current_line_size = 0
@@ -227,8 +227,7 @@ local function wrap_text(elm)
 				for word in all(raw_words) do
 					local size = size_word(word) 
 					if current_line_size + size + space_w > wrap_max and 
-						current_line_size != 0 then
-						printh("adding " .. current_line)
+					current_line_size != 0 then
 						add(elm.lines, { content = current_line })
 						current_line = ""
 						current_line_size = 0
@@ -242,7 +241,6 @@ local function wrap_text(elm)
 					end
 				end
 				if current_line_size > 0 then
-					printh("last adding " .. current_line)
 					add(elm.lines, { content = current_line })
 				end
 			end
@@ -409,9 +407,8 @@ local function position(elm)
 		foreach(elm.lines, function(line)
 			line.x = elm.parent.block.x 
 				+ elm.parent.style.padding_inline[1]
-			line.y = elm.parent.block.y + y * 8
+			line.y = elm.parent.block.y + (y * 8)
 				+ elm.parent.style.padding_block[1]
-			printh("placing line " .. line.content .. " " .. line.x .. " " .. line.y)
 			y += 1
 		end)
 	end 
@@ -463,12 +460,13 @@ function circumflex_elm(elm)
 			margin_block = elm.margin_block or {0, 0},
 			background_color = elm.background_color or nil,
 			border_color = elm.border_color or nil,
-			color = elm.color or 7
+			color = elm.color or 0
 		},
 		name = elm.name or "",
 		content = elm.content or "",
 		parent = nil,
 		children = {},
+		attributes = {},
 		set_children = function(self, children)
 			self.children = children
 			for child in all(self.children) do

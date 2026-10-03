@@ -1,4 +1,4 @@
---[[pod_format="raw",created="2026-09-30 23:40:21",modified="2026-10-01 12:17:26",revision=154,xstickers={}]]
+--[[pod_format="raw",created="2026-09-30 23:40:21",modified="2026-10-03 00:03:36",revision=175,xstickers={}]]
 --[[
 Example content
 
@@ -57,8 +57,6 @@ function new_tokenizer()
 		return { token="attr", name=n, value=v } end
 	function STRING(s) 
 		return { token="string", value=s } end
-	function ATTR_NAME(v) 
-		return { token="attr_name", value=v } end
 	
 	local tokenizer = {
 		content = nil,
@@ -73,6 +71,7 @@ function new_tokenizer()
 		local char = self:next_char()
 		while char != nil do
 			-- decide what to do with the character
+			local result
 			if char == "$" then
 				-- tag names always start with a $
 				self:observe_tag_name()
@@ -116,6 +115,7 @@ function new_tokenizer()
 		if is_whitespace(char) and self.indent_match == nil then
 			-- we don't know what the indentation pattern looks
 			-- like yet, capture it here
+			printh("no pattern")
 			local pattern = char
 			char = self:next_char()
 			while is_whitespace(char) do
@@ -174,10 +174,15 @@ function new_tokenizer()
 				value = value .. char
 				are_esc = false
 			else 
+				local last_value = sub(value, #value, true)
 				if char == "\\" then are_esc = true
 				elseif char == "\"" then done = true
-				elseif char == "\n" then -- ignore
+				elseif char == "\n" then value = value .. " " -- ignore
 				elseif char == "\r" then -- ignore
+				elseif char == " " and last_value != " " then value ..= " "
+				elseif char == " " then --ignore
+				elseif char == "\t" and last_value != " " then value ..= " "
+				elseif char == "\t" then --ignore
 				else value = value .. char end
 			end
 			char = self:next_char()

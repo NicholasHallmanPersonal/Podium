@@ -162,7 +162,7 @@ function new_parser()
 	return parser
 end
 :: podkit/tokenizer.lua
---[[pod_format="raw",created="2026-09-30 23:40:21",modified="2026-10-01 12:02:57",revision=152,xstickers={}]]
+--[[pod_format="raw",created="2026-09-30 23:40:21",modified="2026-10-01 12:17:26",revision=154,xstickers={}]]
 --[[
 Example content
 
@@ -237,25 +237,16 @@ function new_tokenizer()
 		local char = self:next_char()
 		while char != nil do
 			-- decide what to do with the character
-			local result
 			if char == "$" then
 				-- tag names always start with a $
-				printh("tag name")
 				self:observe_tag_name()
-				printh("done tage name")
 			elseif char == "\n" then
 				-- new line, read indentation
-				printh("indent name")
 				self:observe_indentation()
-				printh("done indent")
 			elseif char == "\"" then
-				printh("string")
 				add(self.tokens, self:observe_string())
-				printh("done string")
 			elseif is_attr_char(char) then
-				printh("attr")
 				self:observe_attr()
-				printh("done attr")
 			end
 			char = self:next_char()
 		end
@@ -289,7 +280,6 @@ function new_tokenizer()
 		if is_whitespace(char) and self.indent_match == nil then
 			-- we don't know what the indentation pattern looks
 			-- like yet, capture it here
-			printh("no pattern")
 			local pattern = char
 			char = self:next_char()
 			while is_whitespace(char) do
@@ -321,7 +311,6 @@ function new_tokenizer()
 			end
 			-- we now know how many times the pattern was matched
 			local change = match_count - self.depth_count
-			printh("change " .. change)
 			if change > 0 then 
 				for i = 1, change, 1 do
 					add(self.tokens, INDENT())
@@ -966,11 +955,11 @@ function circumflex_elm(elm)
 	}
 end
 :: .info.pod
---[[pod,created="2026-05-26 21:14:32",modified="2026-10-01 12:02:57",runtime=27,workspaces={{location="podkit/parser.lua#12",workspace_index=1},{location="gfx/0.gfx#36",workspace_index=2},{location="podkit/tokenizer.lua#196,23",workspace_index=7},{location="podkit/parser.lua#13,42",workspace_index=7},{location="podkit/engine.lua#28,37",workspace_index=7},{location="main.lua#13,25",workspace_index=7}}]]
+--[[pod,created="2026-05-26 21:14:32",modified="2026-10-01 12:17:26",runtime=27,workspaces={{location="podkit/parser.lua#12",workspace_index=1},{location="podkit/tokenizer.lua#196,23",workspace_index=1},{location="podkit/parser.lua#13,42",workspace_index=1},{location="podkit/engine.lua#28,37",workspace_index=1},{location="main.lua#13,25",workspace_index=1},{location="gfx/0.gfx#36",workspace_index=2},{location="podkit/tokenizer.lua#207,31",workspace_index=7}}]]
 :: chrome/.info.pod
---[[pod,created="2026-09-28 11:57:39",modified="2026-10-01 12:02:57"]]
+--[[pod,created="2026-09-28 11:57:39",modified="2026-10-01 12:17:26"]]
 :: gfx/.info.pod
---[[pod,created="2026-05-26 21:14:32",modified="2026-10-01 12:02:57"]]
+--[[pod,created="2026-05-26 21:14:32",modified="2026-10-01 12:17:26"]]
 :: gfx/0.gfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNi0w
 OS0yOCAxNDo0NjowMCIscmV2aXNpb249NF1dbHo0APIAAAB1MQAA8yF7WzBdPXtibXA9cHh1AEMg
@@ -979,16 +968,16 @@ oEGQ0QDxHwDhENEgQbAxwCHQEfAISwAdwAgR0CHAMbBBINEQ4U0Av9GQQaAxsCHAEfAGSwAc-yJA
 VzAHIJcAFxCnABcAN1BHACdwZ2CHUJfAJ8AnoAcAJ5AXECdwJxA3UDcgt0CXcFdAqwAdH-AxAP--
 -------------------------------------------------------------0RQbT04fX0=
 :: map/.info.pod
---[[pod,created="2026-05-26 21:14:32",modified="2026-10-01 12:02:57"]]
+--[[pod,created="2026-05-26 21:14:32",modified="2026-10-01 12:17:26"]]
 :: map/0.map
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0w
 MS0xNyAxMDozNzo0NCIscmV2aXNpb249MV1dbHo0AFQAAABEEAAA8Ah7e2JtcD11c2VyZGF0YSgi
 aTE2IiwzMgMALyIwAQD--------------------7oSIpLHBhbl94PTAIANJ5PTAsdGlsZV9oPTE2
 CgBgdz0xNn19
 :: podkit/.info.pod
---[[pod,created="2026-09-28 11:57:45",modified="2026-10-01 12:02:57"]]
+--[[pod,created="2026-09-28 11:57:45",modified="2026-10-01 12:17:26"]]
 :: sfx/.info.pod
---[[pod,created="2026-05-26 21:14:32",modified="2026-10-01 12:02:57"]]
+--[[pod,created="2026-05-26 21:14:32",modified="2026-10-01 12:17:26"]]
 :: sfx/0.sfx
 b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTMxIDA4OjMwOjI4Iixtb2RpZmllZD0iMjAyNS0w
 Ny0zMSAwODozMDoyOCIscmV2aXNpb249MF1dbHo0AKAAAAALCgAA-zBweHUAAygAAAQABA9AEAIO
@@ -996,5 +985,5 @@ AAGgASACoA4ADxAADfDKAQIDQA8PkAQFBgdADJAICQoLQAyQDwwPDQ8ODEAM8P8BAOv-J6oBEAYP
 MBABIAEgAfAAAhACDhABIA8hIAEwD0Dwww8oD--wxg-4Cg--D4AP9w8NAfAJARAGDjAA------_9
 H-8BAKzPyA9AAA8QQP--sPD-AQD-6lD-----KQ==
 :: ui/.info.pod
---[[pod,created="2026-09-28 11:50:29",file_item={},modified="2026-10-01 12:02:57"]]
+--[[pod,created="2026-09-28 11:50:29",file_item={},modified="2026-10-01 12:17:26"]]
 :: [eoc]

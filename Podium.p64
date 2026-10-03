@@ -1,0 +1,1000 @@
+picotron cartridge // www.picotron.net
+version 2
+
+:: chrome/
+:: gfx/
+:: map/
+:: podkit/
+:: sfx/
+:: ui/
+:: README.txt
+--[[pod_format="raw",created="2026-09-28 12:01:29",modified="2026-09-28 12:01:29",revision=0]]
+The PodKit Engine and Podium Browser
+
+The Browsers "chrome" lives in the chrome folder
+
+The engine lives in PodKit
+:: chrome/chrome.lua
+--[[pod_format="raw",created="2026-09-28 12:06:29",modified="2026-09-28 15:00:04",prog="bbs://strawberry_src-15.p64",revision=66,xstickers={}]]
+
+local window_size = {}
+
+local gui = create_gui()
+local url_bar
+
+chrome = {
+  	gui = create_gui(),
+  	url_bar,
+  	window_size = {},
+  	init = function(self) 
+		window {
+  			width = 400,
+  			height = 200,
+  			resizable = true,
+  			title = "Podium"
+  		}
+
+		self.window_size["width"] = get_display():width()
+		self.window_size["height"] = get_display():height()
+	
+  		on_event("resize", function (msg)
+    		self.window_size["width"] = msg.width
+	    	self.window_size["height"] = msg.height
+  		end)
+
+		self.url_bar = self.gui:attach_text_editor{
+			x=36, y=1, bgcol=7, fgcol=0, 
+			width=self.window_size["width"] - 36 - 1, height=13,
+			key_callback = {
+				["enter"] = function(self, k)
+					podkit["location"] = chrome.url_bar:get_text()
+				end
+			}
+		}
+		self.url_bar:set_text(podkit["location"])
+		self.gui:attach_button{
+			x=2,y=1,bgcol=24,fgcol=7,label="\22"
+		}
+		self.gui:attach_button{
+			x=2+15+2,y=1,bgcol=24,fgcol=7,label="\23"
+		}
+ 	end,
+ 	update = function(self)
+		self.gui:update_all()
+ 	end,
+ 	draw = function(self)
+		cls(white)
+		rectfill(0, 0, self.window_size["width"] - 1, 14, 24)
+	
+		self.gui:draw_all()
+	end
+} 
+
+:: main.lua
+--[[pod_format="raw",created="2026-09-28 11:39:55",modified="2026-10-01 11:30:05",prog="bbs://strawberry_src-15.p64",revision=40,xstickers={}]]
+include "./chrome/chrome.lua"
+include "./podkit/engine.lua"
+
+function _init()
+	chrome:init()
+end
+
+function _update()
+  chrome:update()
+
+	if podkit._content == nil 
+	and podkit._is_retrieving == false then
+		podkit:run_lifecycle()
+	end
+end
+
+function _draw()
+  chrome:draw()
+end
+:: podkit/engine.lua
+--[[pod_format="raw",created="2026-09-28 14:48:27",modified="2026-10-01 11:30:39",prog="bbs://strawberry_src-15.p64",revision=52,xstickers={}]]
+--[[
+PodKit Engine Stages
+
+	Retrieve
+	Parse and Style
+	Layout
+	Scroll
+	Paint
+	Draw
+]]
+
+include "./podkit/parser.lua"
+
+podkit = {
+
+	location = "podnet://76050/index.txt",
+	_is_retrieving = false,
+	_content = nil,
+	retrieve = function(self)
+		printh("retrieving")
+		self._is_retrieving = true
+		self._content = fetch(self.location)
+		printh(type(self._content))
+		self._is_retrieving = false
+	end,
+	
+	parse = function(self)
+		printh("parsing " .. self._content)
+		local parser = new_parser()
+		
+		parser:parse(self._content)
+
+	end,
+	
+	run_lifecycle = function(self)
+		self:retrieve() 
+		self:parse()
+	end
+
+}
+:: podkit/parser.lua
+--[[pod_format="raw",created="2026-09-30 00:00:12",modified="2026-10-01 12:02:51",revision=56,xstickers={}]]
+include "./podkit/tokenizer.lua"
+
+function new_parser()
+	local parser = {
+		tokenizer = new_tokenizer()
+	}
+	
+	function parser:parse(content)
+		self.tokenizer:start(content)
+		-- should have tokens
+		for token in all(self.tokenizer.tokens) do
+			printh("type " .. token.token)
+			if token.value != nil and type(token.value) != "table" then
+				printh("  value " .. token.value)
+			end 
+			if token.name != nil then 
+				printh("  name " .. token.name)
+			end
+			if type(token.value) == "table" then
+				printh("  attr value " .. token.value.value)
+			end
+		end
+	end
+	
+	return parser
+end
+:: podkit/tokenizer.lua
+--[[pod_format="raw",created="2026-09-30 23:40:21",modified="2026-10-01 12:02:57",revision=152,xstickers={}]]
+--[[
+Example content
+
+$document
+  $head
+    $title "PodPage Name"
+  $body
+    $h1 "Hello World"
+    $p "This is my pod page"
+	 $div
+	   $div
+	     $p "deeply nested"
+	 $img src="cool.png" alt-text="a cool picture"
+
+]]
+
+function s_to_ord(s)
+	local o = ""
+	for i = 1, #s, 1 do
+		local c = sub(s, i, true)
+		o = o .. " " ord(c)
+	end
+	return o
+end
+
+function is_whitespace(c)
+	return ord(c) == 9 or ord(c) == 32
+end
+
+function is_alphabeta(c)
+	local o = ord(c)
+	if o >= 97 and o <= 122 then return true end
+	if o >= 65 and o <= 90 then return true end
+	return false
+end
+
+function is_dash(c)
+	if c == "-" then return true end
+	return false
+end
+
+function is_attr_char(c)
+	if is_alphabeta(c) or is_dash(c) then return true end
+	return false
+end
+
+function new_tokenizer()
+
+	function INDENT() 
+		return { token="indent" } end
+	function DEDENT() 
+		return { token="dedent" } end
+	function TAG_NAME(v) 
+		return { token="tag_name", value = v } end
+	function ATTRIBUTE(n, v) 
+		return { token="attr", name=n, value=v } end
+	function STRING(s) 
+		return { token="string", value=s } end
+	function ATTR_NAME(v) 
+		return { token="attr_name", value=v } end
+	
+	local tokenizer = {
+		content = nil,
+		tokens = {},
+		indent_match = nil,
+		depth_count = 0,
+		_i = 0
+	}
+	
+	function tokenizer:start(content)
+		self.content = content
+		local char = self:next_char()
+		while char != nil do
+			-- decide what to do with the character
+			local result
+			if char == "$" then
+				-- tag names always start with a $
+				printh("tag name")
+				self:observe_tag_name()
+				printh("done tage name")
+			elseif char == "\n" then
+				-- new line, read indentation
+				printh("indent name")
+				self:observe_indentation()
+				printh("done indent")
+			elseif char == "\"" then
+				printh("string")
+				add(self.tokens, self:observe_string())
+				printh("done string")
+			elseif is_attr_char(char) then
+				printh("attr")
+				self:observe_attr()
+				printh("done attr")
+			end
+			char = self:next_char()
+		end
+	end
+	
+	function tokenizer:peek_char()
+		return sub(self.content, self._i, true)
+	end
+	
+	function tokenizer:next_char()
+		self._i += 1
+		if self._i > #self.content then return nil end
+		return sub(self.content, self._i, true)
+	end
+	
+	function tokenizer:observe_tag_name(i)
+		local name = ""
+		local char = self:next_char()
+		while char != nil and char != " " and char != "\n" 
+		and char != "\t" do
+			name = name .. char
+			char = self:next_char() 
+		end
+		if char == "\n" then self._i -= 1 end
+		add(self.tokens, TAG_NAME(name))
+	end
+	
+	function tokenizer:observe_indentation(i)
+		local char = self:next_char()
+
+		if is_whitespace(char) and self.indent_match == nil then
+			-- we don't know what the indentation pattern looks
+			-- like yet, capture it here
+			printh("no pattern")
+			local pattern = char
+			char = self:next_char()
+			while is_whitespace(char) do
+				pattern = pattern .. char
+				char = self:next_char()
+			end
+			self.indent_match = pattern
+			self.depth_count += 1
+			add(self.tokens, INDENT())
+		elseif is_whitespace(char) then
+			-- count number of times we see the indent pattern
+			local match_count = 0
+			while is_whitespace(char) do
+				local ptrn_pos = 1
+				local ptrn_char = 
+				sub(self.indent_match, ptrn_pos, true)
+				-- pattern matcher
+				while ptrn_pos <= #self.indent_match
+				and char == ptrn_char do
+					ptrn_pos += 1
+					if ptrn_pos > #self.indent_match then
+						match_count += 1
+					else 
+						ptrn_char = 
+							sub(self.indent_match, ptrn_pos, true)
+					end
+					char = self:next_char()
+				end
+			end
+			-- we now know how many times the pattern was matched
+			local change = match_count - self.depth_count
+			printh("change " .. change)
+			if change > 0 then 
+				for i = 1, change, 1 do
+					add(self.tokens, INDENT())
+				end
+			elseif change < 0 then
+				for i = 1, abs(change), 1 do
+					add(self.tokens, DEDENT())
+				end
+			end
+			self.depth_count = match_count
+		end
+		-- the token after \n isn't whitespace 
+		-- and the token after we parse isn't whitespace
+		-- rewind
+		self._i -= 1
+	end
+	
+	function tokenizer:observe_string()
+		local char = self:next_char()
+		local are_esc = false
+		local value = ""
+		local done = false
+		while not done do
+			if are_esc then
+				value = value .. char
+				are_esc = false
+			else 
+				if char == "\\" then are_esc = true
+				elseif char == "\"" then done = true
+				elseif char == "\n" then -- ignore
+				elseif char == "\r" then -- ignore
+				else value = value .. char end
+			end
+			char = self:next_char()
+		end
+		if char == "\n" then self._i -= 1 end
+		return STRING(value)
+	end
+	
+	function tokenizer:observe_attr()
+		local char = self:peek_char()
+		local attr = ""
+		-- continue until we see a space or an =
+		while char != "=" and char != " " do
+			attr = attr .. char
+			char = self:next_char()
+		end
+		
+		if char == "=" then
+			-- there's a attr value
+			char = self:next_char()
+			assert(char == "\"", "attribute names must start with a \" ")
+			add(self.tokens, ATTRIBUTE(
+				attr, 
+				self:observe_string()
+			))
+		elseif char == " " then
+			-- it's a value less attribute!
+			add(self.tokens, ATTRIBUTE(
+				attr, 
+				true
+			))
+		end
+	end
+	
+	return tokenizer
+end
+
+:: retreive.lua
+--[[pod_format="raw",created="2026-09-28 11:40:03",modified="2026-09-28 11:40:16",revision=1]]
+
+
+function 
+:: ui.lua
+--[[pod_format="raw",created="2026-09-28 11:46:02",modified="2026-09-28 11:46:02",revision=0]]
+
+
+
+:: ui/draw.lua
+--[[pod_format="raw",created="2026-09-29 12:29:16",modified="2026-09-29 23:56:15",revision=46,xstickers={}]]
+
+function bg_draw_command(elm) 
+	return {
+		x = elm.block.x,
+		y = elm.block.y,
+		width = elm.block.x + elm.block.width,
+		height = elm.block.y + elm.block.height,
+		background_color = elm.style.background_color,
+	}
+end
+
+function border_draw_command(elm) 
+	return {
+		x = elm.block.x,
+		y = elm.block.y,
+		width = elm.block.x + elm.block.width,
+		height = elm.block.y + elm.block.height,
+		border_color = elm.style.border_color,
+	}
+end
+
+function text_line_draw_commands(elm) 
+	local line_draw_commands = {}
+	for line in all(elm.lines) do
+		add(line_draw_commands, {
+			x = line.x,
+			y = line.y,
+			content = line.content,
+			color = elm.style.color
+		})
+	end
+	return line_draw_commands
+end
+
+function make_draw_list(elm, list)
+	local draw_list = list or {}
+	-- background
+	if elm.style.background_color then
+		add(draw_list, bg_draw_command(elm))
+	end
+	-- border
+	if elm.style.border_color then
+		add(draw_list, border_draw_command(elm))
+	end
+	-- text
+	for line_draw_command in all(text_line_draw_commands(elm)) do
+		add(draw_list, line_draw_command)
+	end
+	
+	for child in all(elm.children) do
+		make_draw_list(child, draw_list)
+	end
+	return draw_list
+end
+
+function draw_layout(draw_list)
+	for v in all(draw_list) do
+		if v.background_color then
+			rectfill(v.x, v.y, v.width, v.height, v.background_color)
+		end
+		if v.border_color then
+			rect(v.x, v.y, v.width, v.height, v.border_color)
+		end
+		
+		if v.content then
+			print(v.content, v.x, v.y, v.color)
+		end
+	end
+end
+:: ui/element.lua
+--[[pod_format="raw",created="2026-09-28 11:56:22",modified="2026-09-28 11:56:25",prog="bbs://strawberry_src-15.p64",revision=1,xstickers={}]]
+
+--[[
+  fn add_element
+  param obj element
+    prop obj properties
+    prop fn render(drawList)
+    prop fn update 
+]]
+function add_element(element) 
+
+end
+
+:: ui/lib.lua
+--[[pod_format="raw",created="2026-09-29 12:19:42",modified="2026-09-30 01:14:29",revision=252,xstickers={}]]
+
+function Fixed(v) return { tag = "Fixed", v = v } end
+function Fit() return { tag = "Fit" } end
+function Grow(v) return { tag = "Grow", v = v or 1 } end
+function Shrink(v) return { tag = "Shrink", v = v or 1 } end
+
+local character_widths = {}
+
+local function size_word(word)
+	local sb = userdata("u8", 6, 10)
+	local acc = 0
+	for i = 1, #word, 1 do
+		local char = sub(word, i, true)
+		if character_widths[char] == nil then
+			set_draw_target(sb)
+			local size = print(char, 0, 0)
+			character_widths[char] = size
+			set_draw_target()
+		end
+		acc += character_widths[char]
+	end
+	return acc
+end
+
+local function size_text_content(content)
+	-- find the length of the content and 
+	-- each word
+	local max_word = 0
+	local word_size_acc = 0
+	local lines = split(content, "\n")
+	for l in all(lines) do
+		local words = split(l, " ")
+		for w in all(words) do
+			local size = size_word(w) 
+			if size > max_word then max_word = size end
+			word_size_acc += size + 5
+		end
+	end 
+	word_size_acc = max(word_size_acc - 5, 0)
+	return {max_word, word_size_acc}
+end
+
+local function clean(elm)
+	elm.block.width = 0
+	elm.block.height = 0
+	elm.block.min_width = elm.style.min_width or 0
+	elm.block.min_height = elm.style.min_height or 0
+	elm.block.x = 0
+	elm.block.y = 0
+	elm.lines = {}
+	for child in all(elm.children) do
+		clean(child)
+	end
+end
+
+local function fit_size_width(elm)
+
+	if elm.name == "text" then
+		-- our prefered width is the full length of the content
+		-- our min width is the largest word
+		-- text elements cant have children so we just return after
+		local sizes = size_text_content(elm.content)
+		elm.block.width = sizes[2]
+		elm.block.min_width = sizes[1]
+		printh("text" .. sizes[2] .. " " .. sizes[1])
+		return
+	end
+
+	local is_row = elm.style.layout.dir == "row"
+
+	local child_acc = elm.style.padding_inline[1]
+	local child_min_acc = elm.style.padding_inline[1]
+	local max_child = 0
+	for child in all(elm.children) do
+		fit_size_width(child)
+		if is_row then
+			child_acc += child.block.width
+			child_min_acc += child.block.min_width
+		else
+			-- off axis, find biggest child width
+			if child.block.width > max_child then
+				max_child = child.block.width
+			end
+		end
+	end
+	
+	if elm.style.sizing.width.tag == "Fixed" then
+		elm.block.width = elm.style.sizing.width.v
+	else
+		local total_gap = #elm.children > 0
+			and (#elm.children - 1) * elm.style.child_gap
+			or 0
+		if is_row then
+			elm.block.min_width = max(child_min_acc + total_gap 
+				+ elm.style.padding_inline[2], elm.block.min_width)
+			elm.block.width = max(child_acc + total_gap 
+				+ elm.style.padding_inline[2], elm.block.min_width)
+			
+		else
+			elm.block.min_width = max(elm.style.padding_inline[1] + 
+				max_child + elm.style.padding_inline[2], 
+				elm.block.min_width)
+			elm.block.width = max(elm.style.padding_inline[1] + 
+				max_child + elm.style.padding_inline[2], elm.block.min_width)
+			
+		end
+	end
+	
+	printh("sized element with w: " .. elm.block.width .. " h: " .. elm.block.height)	
+end
+
+local function grow_shrink_size_width(elm)
+	-- grow and shrink any child elements
+	local is_row = elm.style.layout.dir == "row"
+	
+	local padding_space = is_row
+		and elm.style.padding_inline[1] + elm.style.padding_inline[2]
+		or elm.style.padding_block[1] + elm.style.padding_block[2]
+	local remaining_space = elm.block.width - padding_space
+	-- the remaining taken space is either
+	-- the space consumed by all children if its on axis
+	-- or the remaining space not taken up by the current child
+	-- for off axis
+	-- if remaining space is negative we need to shrink our 
+	-- shrink children
+	local grow_child_weight_total = 0
+	for child in all(elm.children) do
+		if is_row then
+			remaining_space -= child.block.width
+		end
+		
+		if child.style.sizing.width.tag == "Grow" then
+			grow_child_weight_total += child.style.sizing.width.v
+		end
+	end
+	
+	local total_gap = #elm.children > 0
+		and (#elm.children - 1) * elm.style.child_gap
+		or 0
+	if is_row then remaining_space -= total_gap end
+	local shrinkables = {}
+	for child in all(elm.children) do
+		if is_row then
+			if remaining_space > 0 and child.style.sizing.width.tag == "Grow" then
+				local child_grow_entitlement = 
+					child.style.sizing.width.v / grow_child_weight_total
+				child.block.width += remaining_space * child_grow_entitlement
+			end
+			
+			if child.style.sizing.width.tag == "Shrink"
+				or child.style.sizing.width.tag == "Fit" then
+				add(shrinkables, child)
+			end
+		else 
+			-- grow the child to fill the remaining off axis space
+			child.block.width = remaining_space
+		end
+	end
+	
+	-- handle shrinking
+	local EPS = 0.01
+
+	while remaining_space < -EPS and #shrinkables > 0 do
+	  local largest, second_largest = 0, 0
+	
+	  for child in all(shrinkables) do
+	    local w = child.block.width
+	    if abs(w - largest) > EPS then
+	      if w > largest then
+	        second_largest = largest
+	        largest = w
+	      else
+	        second_largest = max(second_largest, w)
+	      end
+	    end
+	  end
+	
+	  -- both values are negative: take the smaller step
+	  local space_to_add = max(
+	    second_largest - largest,
+	    remaining_space / #shrinkables
+	  )
+	
+	  for i = #shrinkables, 1, -1 do
+	    local b = shrinkables[i].block
+	    if abs(b.width - largest) <= EPS then
+	      local prev = b.width
+	      b.width += space_to_add
+	      if b.width <= b.min_width then
+	        b.width = b.min_width
+	        deli(shrinkables, i)
+	      end
+	      remaining_space -= (b.width - prev)
+	    end
+	  end
+	end
+	
+	-- children's widths are now final, so size their children
+	for child in all(elm.children) do
+		grow_shrink_size_width(child)
+	end
+end
+
+local space_w = 5
+local function wrap_text(elm)
+	-- we now know the width that our text is allowed to inhabit
+	-- now we need to create lines that fit inside that width
+	if elm.name == "text" then
+		local wrap_max = elm.parent.block.width
+			- (elm.parent.style.padding_inline[1]
+			+ elm.parent.style.padding_inline[2])
+		
+		printh("wrap " .. elm.content)
+		elm.lines = {}
+		if wrap_max > elm.block.width then
+			-- no need to wrap, place all the content into a line	
+			add(elm.lines, {
+				content = elm.content
+			})
+		else
+			local current_line = ""
+			local current_line_size = 0
+			local raw_lines = split(elm.content, "\n")
+			for rl in all(raw_lines) do
+				local raw_words = split(rl, " ")
+				for word in all(raw_words) do
+					local size = size_word(word) 
+					if current_line_size + size + space_w > wrap_max and 
+						current_line_size != 0 then
+						printh("adding " .. current_line)
+						add(elm.lines, { content = current_line })
+						current_line = ""
+						current_line_size = 0
+					end
+					if current_line_size == 0 then
+						current_line_size += size
+						current_line = word
+					else 
+						current_line_size += size + space_w
+						current_line = current_line .. " " .. word
+					end
+				end
+				if current_line_size > 0 then
+					printh("last adding " .. current_line)
+					add(elm.lines, { content = current_line })
+				end
+			end
+			elm.block.min_height = #elm.lines * 8
+			elm.parent.block.min_height = max(elm.parent.block.min_height, elm.block.min_height) 
+		end
+	end
+	
+	for child in all(elm.children) do
+		wrap_text(child)
+	end
+end
+
+local function fit_size_height(elm)
+	local is_row = elm.style.layout.dir == "row"
+
+	local child_acc = elm.style.padding_block[1]
+	local max_child = 0
+	for child in all(elm.children) do
+		fit_size_height(child)
+		if is_row then
+			-- off axis, find biggest child height
+			if child.block.height > max_child then
+				max_child = child.block.height
+			end
+		else
+			child_acc += child.block.height
+		end
+	end
+	
+	if elm.style.sizing.height.tag == "Fixed" then
+		elm.block.height = elm.style.sizing.height.v
+	else
+		local total_gap = #elm.children > 0
+			and (#elm.children - 1) * elm.style.child_gap
+			or 0
+		if is_row then
+			elm.block.min_height = max(elm.style.padding_block[1] + 
+				max_child + elm.style.padding_block[2], elm.block.min_height)
+			elm.block.height = max(elm.style.padding_block[1] + 
+				max_child + elm.style.padding_block[2], elm.block.min_height)
+		else
+			elm.block.min_height = max(child_acc + total_gap 
+				+ elm.style.padding_block[2], elm.block.min_height)
+			elm.block.height = max(child_acc + total_gap 
+				+ elm.style.padding_block[2], elm.block.min_height)
+		end
+	end
+end
+
+local function grow_shrink_size_height(elm)
+	-- for height, columns are on-axis and rows are off-axis
+	local on_axis = elm.style.layout.dir == "column"
+
+	-- height always uses the block padding, whatever the direction
+	local padding_space = elm.style.padding_block[1] + elm.style.padding_block[2]
+	local remaining_space = elm.block.height - padding_space
+
+	local grow_child_weight_total = 0
+	for child in all(elm.children) do
+		if on_axis then
+			remaining_space -= child.block.height
+		end
+
+		if child.style.sizing.height.tag == "Grow" then
+			grow_child_weight_total += child.style.sizing.height.v
+		end
+	end
+
+	local total_gap = #elm.children > 0
+		and (#elm.children - 1) * elm.style.child_gap
+		or 0
+	if on_axis then remaining_space -= total_gap end
+
+	local shrinkables = {}
+	for child in all(elm.children) do
+		local tag = child.style.sizing.height.tag
+		if on_axis then
+			if remaining_space > 0 and tag == "Grow" then
+				local entitlement = child.style.sizing.height.v / grow_child_weight_total
+				child.block.height += remaining_space * entitlement
+			end
+
+			if tag == "Shrink" or tag == "Fit" then
+				add(shrinkables, child)
+			end
+		else
+			-- off axis: remaining_space is the parent's inner height
+			if tag == "Grow" then
+				child.block.height = remaining_space
+			elseif tag != "Fixed" then
+				-- clamp down to the parent, but never below the child's min
+				child.block.height = max(
+					child.block.min_height,
+					min(child.block.height, remaining_space)
+				)
+			end
+		end
+	end
+
+	-- handle shrinking
+	local EPS = 0.01
+
+	while remaining_space < -EPS and #shrinkables > 0 do
+		local largest, second_largest = 0, 0
+
+		for child in all(shrinkables) do
+			local h = child.block.height
+			if abs(h - largest) > EPS then
+				if h > largest then
+					second_largest = largest
+					largest = h
+				else
+					second_largest = max(second_largest, h)
+				end
+			end
+		end
+
+		-- both values are negative: take the smaller step
+		local space_to_add = max(
+			second_largest - largest,
+			remaining_space / #shrinkables
+		)
+
+		for i = #shrinkables, 1, -1 do
+			local b = shrinkables[i].block
+			if abs(b.height - largest) <= EPS then
+				local prev = b.height
+				b.height += space_to_add
+				if b.height <= b.min_height then
+					b.height = b.min_height
+					deli(shrinkables, i)
+				end
+				remaining_space -= (b.height - prev)
+			end
+		end
+	end
+
+	-- children's heights are now final, so size their children
+	for child in all(elm.children) do
+		grow_shrink_size_height(child)
+	end
+end
+
+local function position(elm)
+	-- compute the element position first
+	if elm.parent == nil then
+		elm.block.x = elm.style.margin_inline[1]
+		elm.block.y = elm.style.margin_block[1]
+	end
+	
+	local is_row = elm.style.layout.dir == "row"
+	
+	local on_axis_acc = is_row
+		and elm.block.x + elm.style.padding_inline[1]
+		or elm.block.y + elm.style.padding_block[1]
+	local off_axis = is_row
+		and elm.block.y + elm.style.padding_block[1]
+		or elm.block.x + elm.style.padding_inline[1]
+		
+	if elm.name == "text" then
+		-- we need to position all of the lines
+		local y = 0
+		foreach(elm.lines, function(line)
+			line.x = elm.parent.block.x 
+				+ elm.parent.style.padding_inline[1]
+			line.y = elm.parent.block.y + y * 8
+				+ elm.parent.style.padding_block[1]
+			printh("placing line " .. line.content .. " " .. line.x .. " " .. line.y)
+			y += 1
+		end)
+	end 
+		
+	for child in all(elm.children) do
+		child.block.x = is_row and on_axis_acc or off_axis
+		child.block.y = not is_row and on_axis_acc or off_axis
+		position(child)
+		on_axis_acc += is_row
+			and child.block.width + elm.style.child_gap 
+			or child.block.height + elm.style.child_gap
+	end
+end
+
+function circumflex_layout(elm)
+	clean(elm)
+	fit_size_width(elm)
+	grow_shrink_size_width(elm)
+	wrap_text(elm)
+	fit_size_height(elm)
+	grow_shrink_size_height(elm)
+	position(elm)
+end
+
+function circumflex_elm(elm) 
+	return {
+		block = {
+			x = 0,
+			y = 0,
+			width = 0,
+			height = 0,
+			min_width = 0,
+			min_height = 0
+		},
+		style = {
+			layout = {
+				dir = elm.dir or "row"
+			},
+			sizing = {
+				width = elm.width or Fit(),
+				height = elm.height or Fit()
+			},
+			min_width = elm.min_width or 0,
+			min_height = elm.min_height or 0,
+			child_gap = elm.child_gap or 0,
+			padding_inline = elm.padding_inline or {0, 0},
+			padding_block = elm.padding_block or {0, 0},
+			margin_inline = elm.margin_inline or {0, 0},
+			margin_block = elm.margin_block or {0, 0},
+			background_color = elm.background_color or nil,
+			border_color = elm.border_color or nil,
+			color = elm.color or 7
+		},
+		name = elm.name or "",
+		content = elm.content or "",
+		parent = nil,
+		children = {},
+		set_children = function(self, children)
+			self.children = children
+			for child in all(self.children) do
+				child.parent = self
+			end
+		end
+	}
+end
+:: .info.pod
+--[[pod,created="2026-05-26 21:14:32",modified="2026-10-01 12:02:57",runtime=27,workspaces={{location="podkit/parser.lua#12",workspace_index=1},{location="gfx/0.gfx#36",workspace_index=2},{location="podkit/tokenizer.lua#196,23",workspace_index=7},{location="podkit/parser.lua#13,42",workspace_index=7},{location="podkit/engine.lua#28,37",workspace_index=7},{location="main.lua#13,25",workspace_index=7}}]]
+:: chrome/.info.pod
+--[[pod,created="2026-09-28 11:57:39",modified="2026-10-01 12:02:57"]]
+:: gfx/.info.pod
+--[[pod,created="2026-05-26 21:14:32",modified="2026-10-01 12:02:57"]]
+:: gfx/0.gfx
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNi0w
+OS0yOCAxNDo0NjowMCIscmV2aXNpb249NF1dbHo0APIAAAB1MQAA8yF7WzBdPXtibXA9cHh1AEMg
+EBAE8FYHEAfAF9AXwAcQB-BWLGZsYWdzPTAscGFuX3gIAMt5PTAsem9vbT04fSw_AP8MBhHAIbAx
+oEGQ0QDxHwDhENEgQbAxwCHQEfAISwAdwAgR0CHAMbBBINEQ4U0Av9GQQaAxsCHAEfAGSwAc-yJA
+VzAHIJcAFxCnABcAN1BHACdwZ2CHUJfAJ8AnoAcAJ5AXECdwJxA3UDcgt0CXcFdAqwAdH-AxAP--
+-------------------------------------------------------------0RQbT04fX0=
+:: map/.info.pod
+--[[pod,created="2026-05-26 21:14:32",modified="2026-10-01 12:02:57"]]
+:: map/0.map
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTAxLTE3IDEwOjM1OjQ4Iixtb2RpZmllZD0iMjAyNS0w
+MS0xNyAxMDozNzo0NCIscmV2aXNpb249MV1dbHo0AFQAAABEEAAA8Ah7e2JtcD11c2VyZGF0YSgi
+aTE2IiwzMgMALyIwAQD--------------------7oSIpLHBhbl94PTAIANJ5PTAsdGlsZV9oPTE2
+CgBgdz0xNn19
+:: podkit/.info.pod
+--[[pod,created="2026-09-28 11:57:45",modified="2026-10-01 12:02:57"]]
+:: sfx/.info.pod
+--[[pod,created="2026-05-26 21:14:32",modified="2026-10-01 12:02:57"]]
+:: sfx/0.sfx
+b64$LS1bW3BvZCxjcmVhdGVkPSIyMDI1LTA3LTMxIDA4OjMwOjI4Iixtb2RpZmllZD0iMjAyNS0w
+Ny0zMSAwODozMDoyOCIscmV2aXNpb249MF1dbHo0AKAAAAALCgAA-zBweHUAAygAAAQABA9AEAIO
+AAGgASACoA4ADxAADfDKAQIDQA8PkAQFBgdADJAICQoLQAyQDwwPDQ8ODEAM8P8BAOv-J6oBEAYP
+MBABIAEgAfAAAhACDhABIA8hIAEwD0Dwww8oD--wxg-4Cg--D4AP9w8NAfAJARAGDjAA------_9
+H-8BAKzPyA9AAA8QQP--sPD-AQD-6lD-----KQ==
+:: ui/.info.pod
+--[[pod,created="2026-09-28 11:50:29",file_item={},modified="2026-10-01 12:02:57"]]
+:: [eoc]

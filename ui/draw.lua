@@ -1,11 +1,11 @@
---[[pod_format="raw",created="2026-09-29 12:29:16",modified="2026-10-04 02:21:47",revision=132,xstickers={}]]
+--[[pod_format="raw",created="2026-09-29 12:29:16",modified="2026-10-04 21:41:45",revision=140,xstickers={}]]
 
 local function bg_draw_command(sb, elm) 
 	return {
 		x = sb.x,
 		y = sb.y,
-		width = sb.x + sb.width,
-		height = sb.y + sb.height,
+		width = sb.width,
+		height = sb.height,
 		background_color = elm.style.background_color,
 	}
 end
@@ -14,8 +14,8 @@ local function border_draw_command(sb, elm)
 	return {
 		x = sb.x,
 		y = sb.y,
-		width = sb.x + sb.width,
-		height = sb.y + sb.height,
+		width = sb.width,
+		height = sb.height,
 		border_color = elm.style.border_color,
 	}
 end
@@ -43,8 +43,8 @@ function draw:to_screen_space(block, frame)
 	return {
 		x = block.x + frame.x,
 		y = block.y + frame.y - frame.scroll,
-		width = block.width + frame.x,
-		height = block.height + frame.y - frame.scroll
+		width = block.width,
+		height = block.height
 	}
 end
 

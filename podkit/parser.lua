@@ -1,4 +1,4 @@
---[[pod_format="raw",created="2026-09-30 00:00:12",modified="2026-10-04 00:01:30",revision=116,xstickers={}]]
+--[[pod_format="raw",created="2026-09-30 00:00:12",modified="2026-10-04 21:55:48",revision=119,xstickers={}]]
 include "./podkit/tokenizer.lua"
 include "./ui/lib.lua"
 include "./podkit/styler.lua"
@@ -44,6 +44,7 @@ function new_parser()
 				cur_elm.parent = parent_stack[#parent_stack]
 				add(parent_stack[#parent_stack].children, cur_elm)
 				styler:style(cur_elm)
+				add_dom_funcs(cur_elm)
 				-- record found body tag for ease of layout
 				if cur_elm.name == "body" then body = cur_elm end
 			elseif token.token == "attr" then
@@ -61,6 +62,7 @@ function new_parser()
 				text_elm.name = "text"
 				add(cur_elm.children, text_elm)
 				text_elm.parent = cur_elm
+				add_dom_funcs(text_elm)
 			elseif token.token == "indent" then
 				-- cur element is a parent of the
 				-- next element we are going to see

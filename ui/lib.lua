@@ -1,4 +1,4 @@
---[[pod_format="raw",created="2026-09-29 12:19:42",modified="2026-10-03 19:38:18",revision=296,xstickers={}]]
+--[[pod_format="raw",created="2026-09-29 12:19:42",modified="2026-10-04 00:40:38",revision=303,xstickers={}]]
 
 function Fixed(v) return { tag = "Fixed", v = v } end
 function Fit() return { tag = "Fit" } end
@@ -213,7 +213,9 @@ local function wrap_text(elm)
 		if wrap_max > elm.block.width then
 			-- no need to wrap, place all the content into a line	
 			add(elm.lines, {
-				content = elm.content
+				content = elm.content,
+				height = 10,
+				width = elm.block.width
 			})
 			elm.block.height = 10
 			elm.block.min_height = 10
@@ -228,7 +230,11 @@ local function wrap_text(elm)
 					local size = size_word(word) 
 					if current_line_size + size + space_w > wrap_max and 
 					current_line_size != 0 then
-						add(elm.lines, { content = current_line })
+						add(elm.lines, { 
+							content = current_line,
+							height = 10,
+							width = size_text_content(current_line)[2]
+						})
 						current_line = ""
 						current_line_size = 0
 					end
@@ -241,7 +247,11 @@ local function wrap_text(elm)
 					end
 				end
 				if current_line_size > 0 then
-					add(elm.lines, { content = current_line })
+					add(elm.lines, { 
+						content = current_line,
+						height = 10,
+						width = size_text_content(current_line)[2]
+					})
 				end
 			end
 			elm.block.min_height = #elm.lines * 10

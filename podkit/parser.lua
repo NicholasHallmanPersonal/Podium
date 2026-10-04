@@ -1,7 +1,8 @@
---[[pod_format="raw",created="2026-09-30 00:00:12",modified="2026-10-03 13:16:24",revision=108,xstickers={}]]
+--[[pod_format="raw",created="2026-09-30 00:00:12",modified="2026-10-04 00:01:30",revision=116,xstickers={}]]
 include "./podkit/tokenizer.lua"
 include "./ui/lib.lua"
 include "./podkit/styler.lua"
+include "./podkit/dom.lua"
 
 function debug_tokens(tokens)
 	-- should have tokens
@@ -24,13 +25,13 @@ function new_parser()
 		tokenizer = new_tokenizer()
 	}
 	
-	function parser:parse(content)
+	function parser:parse(content, root)
 		self.tokenizer:start(content)
 		local tokens = self.tokenizer.tokens
 		assert(#tokens > 0, "Empty content")
 		debug_tokens( tokens )
 		local cur_elm = nil
-		local root = circumflex_elm{ name="root" }
+		
 		local body = nil
 		local parent_stack = {}
 		parent_stack[1] = root
@@ -39,6 +40,7 @@ function new_parser()
 			if token.token == "tag_name" then
 				-- create a new element 
 				cur_elm = circumflex_elm{ name=token.value }
+				add_dom_funcs(cur_elm)
 				cur_elm.parent = parent_stack[#parent_stack]
 				add(parent_stack[#parent_stack].children, cur_elm)
 				styler:style(cur_elm)
@@ -69,7 +71,7 @@ function new_parser()
 			end
 		end
 		
-		return root, body
+		return body
 	end
 	
 	return parser

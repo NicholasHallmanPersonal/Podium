@@ -1,4 +1,4 @@
---[[pod_format="raw",created="2026-10-03 23:44:39",modified="2026-10-04 22:10:35",revision=29,xstickers={}]]
+--[[pod_format="raw",created="2026-10-03 23:44:39",modified="2026-10-04 22:54:36",revision=31,xstickers={}]]
 
 
 local function dispatch(elm, e)
@@ -19,10 +19,9 @@ local function dispatch(elm, e)
 	end
 	
 	local parents = record_parents(target)
-	printh("parents " .. #parents)
+
 	for parent in all(parents) do
 		for l_name, listener in pairs(parent.listeners) do
-			printh("listener " .. e.type)
 			if l_name == e.type then
 				if listener(e) == false then
 					default_prevented = true

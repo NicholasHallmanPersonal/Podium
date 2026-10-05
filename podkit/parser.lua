@@ -1,4 +1,4 @@
---[[pod_format="raw",created="2026-09-30 00:00:12",modified="2026-10-04 21:55:48",revision=119,xstickers={}]]
+--[[pod_format="raw",created="2026-09-30 00:00:12",modified="2026-10-05 00:38:56",revision=125,xstickers={}]]
 include "./podkit/tokenizer.lua"
 include "./ui/lib.lua"
 include "./podkit/styler.lua"
@@ -29,7 +29,7 @@ function new_parser()
 		self.tokenizer:start(content)
 		local tokens = self.tokenizer.tokens
 		assert(#tokens > 0, "Empty content")
-		debug_tokens( tokens )
+
 		local cur_elm = nil
 		
 		local body = nil
@@ -38,6 +38,7 @@ function new_parser()
 		local styler = new_styler()
 		for token in all(tokens) do
 			if token.token == "tag_name" then
+				check_to_promote(cur_elm)
 				-- create a new element 
 				cur_elm = circumflex_elm{ name=token.value }
 				add_dom_funcs(cur_elm)

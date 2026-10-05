@@ -1,4 +1,4 @@
---[[pod_format="raw",created="2026-09-28 12:06:29",modified="2026-10-04 22:37:33",prog="bbs://strawberry_src-15.p64",revision=210,xstickers={}]]
+--[[pod_format="raw",created="2026-09-28 12:06:29",modified="2026-10-05 00:27:11",prog="bbs://strawberry_src-15.p64",revision=225,xstickers={}]]
 
 include "./chrome/input.lua"
 include "./podkit/engine.lua"
@@ -65,6 +65,7 @@ function chrome:init()
 	
 	-- Initialize the podkit engine
 	
+	printh("new engine")
 	self.podkit = new_engine()
 	self.podkit:init(self.frame)
 	self:handle_root_events()
@@ -119,17 +120,18 @@ end
 
 function chrome:handle_root_events()
 	self.podkit.dom.listeners["mouse_click"] = function(e) 
-		if e.target.parent.name == "a" then
+		if e.target.name == "a" then
 			-- navigate!
-			local next_url = e.target.parent.attributes["href"]
+			local next_url = e.target.attributes["href"]
 			podkit.location = next_url
 			podkit._is_retrieving = false
 			podkit._content = nil
-			self.podkit.dom.children = {}
-			self.podkit.body = nil
-			self.podkit.need_draw = true
-			self.frame.scroll = 0
+			self.podkit = new_engine()
+			podkit.location = next_url
 			
+			self.frame.scroll = 0
+			self.podkit:init(self.frame)
+			self:handle_root_events()
 			self.podkit:retrieve() 
 			self.podkit:parse()
 			self.podkit:reflow(self.frame)

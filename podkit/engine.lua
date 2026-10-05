@@ -1,4 +1,4 @@
---[[pod_format="raw",created="2026-09-28 14:48:27",modified="2026-10-04 22:34:22",prog="bbs://strawberry_src-15.p64",revision=301,xstickers={}]]
+--[[pod_format="raw",created="2026-09-28 14:48:27",modified="2026-10-05 00:25:51",prog="bbs://strawberry_src-15.p64",revision=316,xstickers={}]]
 --[[
 PodKit Engine Stages
 
@@ -14,6 +14,7 @@ include "./podkit/parser.lua"
 include "./ui/lib.lua"
 include "./ui/draw.lua"
 include "./podkit/components.lua"
+include "./elements/image.lua"
 
 function debug_dom(elm, l)
 	local level = l or 1
@@ -48,16 +49,15 @@ function new_engine()
 		hit_boxes = {}
 	}
 	
+	wc_extend(podkit)
+	
 	function podkit:retrieve()
-		printh("what is this " .. type(self.name))
 		self._is_retrieving = true
 		self._content = fetch(self.location)
-		printh(type(self._content))
 		self._is_retrieving = false
 	end
 	
 	function podkit:parse()
-		printh("parsing " .. self._content)
 		local parser = new_parser()
 		self.body = parser:parse(self._content, self.dom)
 	end
@@ -113,12 +113,13 @@ function new_engine()
 		draw:draw_layout(draw_list, frame)
 		self.need_draw = false
 	end
-	
-	-- returns the deepest element under the mouse (and its depth), or nil
+
 	function podkit:find_hit(elm, frame, mx, my, depth)
+		-- have text clicks dispatch as the parent	
+		if elm.name == "text" then return nil end
+	
 		depth = depth or 0
 	
-		-- children first, last-to-first so the topmost sibling wins
 		for i = #elm.children, 1, -1 do
 			local found, d = self:find_hit(elm.children[i], frame, mx, my, depth + 1)
 			if found then return found, d end
@@ -169,7 +170,6 @@ function new_engine()
 		-- and routing
 		self:scroll(frame)
 		
-
 		self:hit_test(self.dom, frame, events)	
 		
 	end
@@ -179,14 +179,10 @@ function new_engine()
 		self.dom = circumflex_elm{ name="root" }
 		add_dom_funcs(self.dom)
 		
-		printh("????? " .. type(self.handle_events))
-		
 		self:retrieve() 
 		self:parse()
 		self:reflow(frame)
 	end
-	
-	
 	
 	return podkit
 end

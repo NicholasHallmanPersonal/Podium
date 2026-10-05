@@ -1,4 +1,4 @@
---[[pod_format="raw",created="2026-09-29 12:19:42",modified="2026-10-04 00:40:38",revision=303,xstickers={}]]
+--[[pod_format="raw",created="2026-09-29 12:19:42",modified="2026-10-05 12:20:32",revision=306,xstickers={}]]
 
 function Fixed(v) return { tag = "Fixed", v = v } end
 function Fit() return { tag = "Fit" } end
@@ -72,6 +72,7 @@ local function fit_size_width(elm)
 	local child_acc = elm.style.padding_inline[1]
 	local child_min_acc = elm.style.padding_inline[1]
 	local max_child = 0
+	local max_child_min = 0
 	for child in all(elm.children) do
 		fit_size_width(child)
 		if is_row then
@@ -81,6 +82,9 @@ local function fit_size_width(elm)
 			-- off axis, find biggest child width
 			if child.block.width > max_child then
 				max_child = child.block.width
+			end
+			if child.block.min_width > max_child_min then
+				max_child_min = child.block.min_width
 			end
 		end
 	end
@@ -98,12 +102,12 @@ local function fit_size_width(elm)
 			elm.block.width = max(child_acc + total_gap 
 				+ elm.style.padding_inline[2], elm.block.min_width)
 		else
-			elm.block.min_width = max(elm.style.padding_inline[1] + 
-				max_child + elm.style.padding_inline[2], 
+			elm.block.min_width = max(elm.style.padding_inline[1] +
+				max_child_min + elm.style.padding_inline[2],
 				elm.block.min_width)
-			elm.block.width = max(elm.style.padding_inline[1] + 
-				max_child + elm.style.padding_inline[2], elm.block.min_width)
-			
+			elm.block.width = max(elm.style.padding_inline[1] +
+				max_child + elm.style.padding_inline[2],
+				elm.block.min_width)
 		end
 	end
 end

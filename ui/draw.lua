@@ -1,4 +1,4 @@
---[[pod_format="raw",created="2026-09-29 12:29:16",modified="2026-10-04 21:41:45",revision=140,xstickers={}]]
+--[[pod_format="raw",created="2026-09-29 12:29:16",modified="2026-10-05 11:57:58",revision=153,xstickers={}]]
 
 local function bg_draw_command(sb, elm) 
 	return {
@@ -17,6 +17,16 @@ local function border_draw_command(sb, elm)
 		width = sb.width,
 		height = sb.height,
 		border_color = elm.style.border_color,
+	}
+end
+
+local function image_draw_command(sb, elm)
+	return {
+		x = sb.x,
+		y = sb.y,
+		width = sb.width,
+		height = sb.height,
+		spr = elm.image_data
 	}
 end
 
@@ -59,6 +69,7 @@ function draw:make_draw_list(elm, frame, list)
       sb.y + sb.height > frame.y)
 
 	if hit then
+		printh("hit " .. elm.name)
 		-- background
 		if elm.style.background_color then
 			add(draw_list, bg_draw_command(sb, elm))
@@ -66,6 +77,11 @@ function draw:make_draw_list(elm, frame, list)
 		-- border
 		if elm.style.border_color then
 			add(draw_list, border_draw_command(sb, elm))
+		end
+		-- image
+		if elm.image_data then
+			printh("has image data?")
+			add(draw_list, image_draw_command(sb, elm))
 		end
 		-- text
 		for line_draw_command in all(text_line_draw_commands(sb, elm)) do
@@ -93,6 +109,11 @@ function draw:draw_layout(draw_list, frame)
 		end
 		if v.border_color then
 			rect(x1, y1, x2, y2, v.border_color)
+		end
+		if v.spr then
+			printh("drawing sprite? " .. v.x .. " " .. v.y)
+			printh("image? " .. type(v.spr))
+			spr(v.spr, v.x, v.y)
 		end
 		if v.content then
 			print(v.content, x1, y1, v.color)

@@ -1,4 +1,4 @@
---[[pod_format="raw",created="2026-10-04 00:04:51",modified="2026-10-05 00:43:09",revision=33,xstickers={}]]
+--[[pod_format="raw",created="2026-10-04 00:04:51",modified="2026-10-05 12:13:53",revision=43,xstickers={}]]
 
 local engine = nil
 local buffer_reg = {}
@@ -15,10 +15,9 @@ end
 function check_to_promote(elm)
 	if elm == nil then return end
 	if engine.wc_registry[elm.name] != nil then
-		printh("promoting " .. elm.name)
 		local comp = engine.wc_registry[elm.name]()
 		elm._wc = comp
-		comp.promote(elm)
+		comp:promote(elm)
 	end
 end
 

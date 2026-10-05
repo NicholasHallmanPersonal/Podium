@@ -1,4 +1,4 @@
---[[pod_format="raw",created="2026-09-30 00:00:12",modified="2026-10-05 00:38:56",revision=125,xstickers={}]]
+--[[pod_format="raw",created="2026-09-30 00:00:12",modified="2026-10-05 11:33:04",revision=127,xstickers={}]]
 include "./podkit/tokenizer.lua"
 include "./ui/lib.lua"
 include "./podkit/styler.lua"
@@ -73,7 +73,7 @@ function new_parser()
 				deli(parent_stack)
 			end
 		end
-		
+		check_to_promote(cur_elm)
 		return body
 	end
 	

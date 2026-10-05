@@ -1,4 +1,4 @@
---[[pod_format="raw",created="2026-10-02 18:49:31",modified="2026-10-04 22:54:49",revision=32,xstickers={}]]
+--[[pod_format="raw",created="2026-10-02 18:49:31",modified="2026-10-05 12:14:48",revision=42,xstickers={}]]
 
 include "./ui/lib.lua"
 
@@ -11,6 +11,16 @@ function new_styler()
 				padding_inline = {2, 2},
 				width = Fixed(0),
 				height = Fit()
+			},
+			row = {
+				dir = "row",
+				child_gap = 2,
+				padding_block = {2, 0},
+				width = Fit()
+			},
+			column = {
+				dir = "column",
+				width = Fit()
 			},
 			h1 = {
 				padding_block = {6, 6},

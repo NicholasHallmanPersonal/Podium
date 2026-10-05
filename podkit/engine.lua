@@ -1,4 +1,4 @@
---[[pod_format="raw",created="2026-09-28 14:48:27",modified="2026-10-05 00:25:51",prog="bbs://strawberry_src-15.p64",revision=316,xstickers={}]]
+--[[pod_format="raw",created="2026-09-28 14:48:27",modified="2026-10-05 12:07:19",prog="bbs://strawberry_src-15.p64",revision=326,xstickers={}]]
 --[[
 PodKit Engine Stages
 
@@ -15,6 +15,20 @@ include "./ui/lib.lua"
 include "./ui/draw.lua"
 include "./podkit/components.lua"
 include "./elements/image.lua"
+
+-- override fetch to cache resources and make fetch faster
+local resources = {}
+local og_fetch = fetch
+function fetch(url, options)
+	
+	if resources[url] != nil then
+		return resources[url]
+	end
+	
+	resources[url] = og_fetch(url, options)
+	return resources[url]
+	
+end
 
 function debug_dom(elm, l)
 	local level = l or 1
@@ -46,7 +60,8 @@ function new_engine()
 		body = nil,
 		need_draw = true,
 		last_frame = nil,
-		hit_boxes = {}
+		hit_boxes = {},
+		resources = {}
 	}
 	
 	wc_extend(podkit)
@@ -183,7 +198,7 @@ function new_engine()
 		self:parse()
 		self:reflow(frame)
 	end
-	
+
 	return podkit
 end
 

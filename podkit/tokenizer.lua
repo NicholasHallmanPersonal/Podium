@@ -1,4 +1,4 @@
---[[pod_format="raw",created="2026-09-30 23:40:21",modified="2026-10-03 00:03:36",revision=175,xstickers={}]]
+--[[pod_format="raw",created="2026-09-30 23:40:21",modified="2026-10-07 12:08:54",revision=176,xstickers={}]]
 --[[
 Example content
 
@@ -32,6 +32,7 @@ function is_alphabeta(c)
 	local o = ord(c)
 	if o >= 97 and o <= 122 then return true end
 	if o >= 65 and o <= 90 then return true end
+	if o == 64 then return true end
 	return false
 end
 

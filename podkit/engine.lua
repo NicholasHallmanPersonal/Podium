@@ -1,4 +1,4 @@
---[[pod_format="raw",created="2026-09-28 14:48:27",modified="2026-10-05 12:07:19",prog="bbs://strawberry_src-15.p64",revision=326,xstickers={}]]
+--[[pod_format="raw",created="2026-09-28 14:48:27",modified="2026-10-07 12:06:32",prog="bbs://strawberry_src-15.p64",revision=333,xstickers={}]]
 --[[
 PodKit Engine Stages
 
@@ -30,27 +30,6 @@ function fetch(url, options)
 	
 end
 
-function debug_dom(elm, l)
-	local level = l or 1
-	local s = ""
-	for i = 1, level, 1 do
-		s ..= " "
-	end
-	
-	s ..= elm.name
-	for k,v in pairs(elm.attributes) do
-		s ..= " " .. k .. " = " .. v
-	end
-	
-	if #elm.content > 0 then
-		s ..= " " .. elm.content
-	end
-	printh(s)
-	for child in all(elm.children) do
-		debug_dom(child, level + 1)
-	end
-end
-
 function new_engine()
 	podkit = {
 		location = "podnet://76050/index.txt",
@@ -75,6 +54,10 @@ function new_engine()
 	function podkit:parse()
 		local parser = new_parser()
 		self.body = parser:parse(self._content, self.dom)
+		-- fetch additional script resources
+		if podkit.include_and_promote then
+			podkit:include_and_promote()
+		end
 	end
 	
 	function podkit:reflow(frame)

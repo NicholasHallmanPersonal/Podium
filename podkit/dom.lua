@@ -1,5 +1,25 @@
---[[pod_format="raw",created="2026-10-03 23:44:39",modified="2026-10-04 22:54:36",revision=31,xstickers={}]]
+--[[pod_format="raw",created="2026-10-03 23:44:39",modified="2026-10-07 12:06:43",revision=32,xstickers={}]]
 
+function debug_dom(elm, l)
+	local level = l or 1
+	local s = ""
+	for i = 1, level, 1 do
+		s ..= " "
+	end
+	
+	s ..= elm.name
+	for k,v in pairs(elm.attributes) do
+		s ..= " " .. k .. " = " .. v
+	end
+	
+	if #elm.content > 0 then
+		s ..= " " .. elm.content
+	end
+	printh(s)
+	for child in all(elm.children) do
+		debug_dom(child, level + 1)
+	end
+end
 
 local function dispatch(elm, e)
 	local target = elm

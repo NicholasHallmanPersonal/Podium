@@ -1,4 +1,4 @@
---[[pod_format="raw",created="2026-09-29 12:29:16",modified="2026-10-05 11:57:58",revision=153,xstickers={}]]
+--[[pod_format="raw",created="2026-09-29 12:29:16",modified="2026-10-07 11:54:01",revision=156,xstickers={}]]
 
 local function bg_draw_command(sb, elm) 
 	return {
@@ -69,7 +69,6 @@ function draw:make_draw_list(elm, frame, list)
       sb.y + sb.height > frame.y)
 
 	if hit then
-		printh("hit " .. elm.name)
 		-- background
 		if elm.style.background_color then
 			add(draw_list, bg_draw_command(sb, elm))
@@ -80,7 +79,6 @@ function draw:make_draw_list(elm, frame, list)
 		end
 		-- image
 		if elm.image_data then
-			printh("has image data?")
 			add(draw_list, image_draw_command(sb, elm))
 		end
 		-- text
@@ -111,8 +109,6 @@ function draw:draw_layout(draw_list, frame)
 			rect(x1, y1, x2, y2, v.border_color)
 		end
 		if v.spr then
-			printh("drawing sprite? " .. v.x .. " " .. v.y)
-			printh("image? " .. type(v.spr))
 			spr(v.spr, v.x, v.y)
 		end
 		if v.content then
